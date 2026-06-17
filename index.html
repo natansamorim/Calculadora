@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Carteira Digital - Multi Moedas V5</title>
+    <title>Minha Carteira Digital - V7 (Nuvem)</title>
     <style>
         :root {
             --primary: #2563eb;
@@ -44,13 +44,15 @@
         tr.total-row { background-color: #f8fafc; font-weight: bold; border-top: 2px solid var(--primary); }
         .delete-btn { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
 
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; display: inline-block; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; color: white; display: inline-block; margin-bottom: 2px;}
+        .badge-fixo { background-color: #475569; }
+        .badge-var { background-color: #94a3b8; }
 
         .summary-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
         .card { padding: 20px; border-radius: 8px; text-align: center; color: white; }
         .card h3 { margin: 0 0 10px 0; font-size: 14px; text-transform: uppercase; }
         .card p { margin: 0; font-size: 22px; font-weight: bold; }
-        .card span { display: block; font-size: 12px; margin-top: 5px; opacity: 0.9; }
+        .card span { display: block; font-size: 13px; margin-top: 5px; opacity: 0.95; font-weight: 500;}
         .bg-income { background: var(--primary); }
         .bg-expense { background: var(--danger); }
         .bg-balance { background: var(--success); }
@@ -58,6 +60,10 @@
         
         .header-controls { display: flex; justify-content: space-between; align-items: center; background: #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .header-controls select { width: auto; min-width: 200px; font-weight: bold; color: var(--primary); }
+        
+        .cloud-status { text-align: center; font-size: 12px; font-weight: bold; margin-bottom: 15px; padding: 5px; border-radius: 4px; }
+        .cloud-on { background: #dcfce7; color: #166534; }
+        .cloud-off { background: #fee2e2; color: #991b1b; }
 
         @media (max-width: 768px) {
             .summary-cards { grid-template-columns: 1fr; }
@@ -72,6 +78,7 @@
 
 <div class="container">
     <h1>Carteira Digital</h1>
+    <div id="cloudIndicator" class="cloud-status cloud-off">Sincronização na Nuvem: Desativada (Iniciando...)</div>
 
     <!-- Controles de Mês Global -->
     <div class="header-controls">
@@ -90,23 +97,23 @@
     <!-- ABA 1: Calculadora e Lançamentos -->
     <div id="calculadora" class="tab-content active">
         
-        <h3>1. Renda e Cotações do Mês Selecionado</h3>
+        <h3>1. Renda e Cotações do Mês</h3>
         <div class="settings-grid">
             <div class="form-group">
                 <label>Renda Fixa (USD $)</label>
-                <input type="number" id="incomeUsd" onchange="saveMonthSettings()" value="0">
+                <input type="number" id="incomeUsd" onchange="saveMonthSettings()" value="0.00" step="0.01">
             </div>
             <div class="form-group">
                 <label>Renda Fixa (R$ Real)</label>
-                <input type="number" id="incomeBrl" onchange="saveMonthSettings()" value="0">
+                <input type="number" id="incomeBrl" onchange="saveMonthSettings()" value="0.00" step="0.01">
             </div>
             <div class="form-group">
                 <label>Renda Variável (USD $)</label>
-                <input type="number" id="incomeVarUsd" onchange="saveMonthSettings()" value="0">
+                <input type="number" id="incomeVarUsd" onchange="saveMonthSettings()" value="0.00" step="0.01">
             </div>
             <div class="form-group">
                 <label>Renda Variável (R$ Real)</label>
-                <input type="number" id="incomeVarBrl" onchange="saveMonthSettings()" value="0">
+                <input type="number" id="incomeVarBrl" onchange="saveMonthSettings()" value="0.00" step="0.01">
             </div>
         </div>
 
@@ -116,7 +123,7 @@
                 <input type="number" step="0.01" id="manualBobRate" onchange="saveMonthSettings()" value="1.35">
             </div>
             <div class="form-group" style="display: flex; align-items: center; justify-content: center; font-size: 13px; padding-top: 15px;">
-                <span>Cotação USD → BRL (Salva no mês): <strong id="autoUsdRateDisplay">Carregando...</strong></span>
+                <span>Cotação USD → BRL: <strong id="autoUsdRateDisplay">Carregando...</strong></span>
             </div>
         </div>
         
@@ -138,7 +145,14 @@
                 </div>
             </div>
             
-            <div class="settings-grid" style="margin-top: 10px; background: none; padding: 0; border: none;">
+            <div class="settings-grid" style="margin-top: 10px; background: none; padding: 0; border: none; grid-template-columns: repeat(4, 1fr);">
+                <div class="form-group">
+                    <label>Tipo de Gasto</label>
+                    <select id="expType">
+                        <option value="Fixo">Fixo Mensal</option>
+                        <option value="Variável">Variável</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>Valor</label>
                     <input type="number" step="0.01" id="expAmount" required>
@@ -152,7 +166,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Mês de Lançamento</label>
+                    <label>Mês</label>
                     <input type="month" id="expMonth" required disabled style="background:#f1f5f9; cursor:not-allowed;">
                 </div>
             </div>
@@ -164,11 +178,11 @@
             <table id="expensesTable">
                 <thead>
                     <tr>
-                        <th>Tag</th>
+                        <th>Identificação (Tag/Tipo)</th>
                         <th>Despesa</th>
                         <th>Valor Original</th>
-                        <th>Precisa em BRL</th>
-                        <th>Precisa em Bs.</th>
+                        <th>Equivalente (BRL)</th>
+                        <th>Equivalente (BOB)</th>
                         <th>Ação</th>
                     </tr>
                 </thead>
@@ -183,19 +197,22 @@
         <h2 style="margin-top:0;" id="saudeMonthTitle">Saúde Financeira</h2>
         <div class="summary-cards">
             <div class="card bg-income">
-                <h3>Renda do Mês</h3>
+                <h3>Renda Total do Mês</h3>
                 <p id="dashIncome">$ 0.00</p>
                 <span id="dashIncomeBrl">R$ 0.00</span>
+                <span id="dashIncomeBob" style="color:#dcfce7;">Bs. 0.00</span>
             </div>
             <div class="card bg-expense">
-                <h3>Gasto do Mês</h3>
+                <h3>Gasto Total do Mês</h3>
                 <p id="dashExpense">$ 0.00</p>
                 <span id="dashExpenseBrl">R$ 0.00</span>
+                <span id="dashExpenseBob" style="color:#fee2e2;">Bs. 0.00</span>
             </div>
             <div class="card bg-balance">
                 <h3>Saldo Restante</h3>
                 <p id="dashBalance">$ 0.00</p>
                 <span id="dashBalanceBrl">R$ 0.00</span>
+                <span id="dashBalanceBob" style="color:#dcfce7;">Bs. 0.00</span>
             </div>
         </div>
 
@@ -205,9 +222,10 @@
                 <thead>
                     <tr>
                         <th>Tag</th>
-                        <th>Total em USD</th>
-                        <th>Total em BRL</th>
-                        <th>% da Renda Total</th>
+                        <th>Total (USD)</th>
+                        <th>Total (BRL)</th>
+                        <th>Total (BOB)</th>
+                        <th>% da Renda</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -227,16 +245,19 @@
                 <h3>Ganhos no Ano</h3>
                 <p id="annualIncome">$ 0.00</p>
                 <span id="annualIncomeBrl">R$ 0.00</span>
+                <span id="annualIncomeBob" style="color:#e2e8f0;">Bs. 0.00</span>
             </div>
             <div class="card bg-expense">
                 <h3>Gastos no Ano</h3>
                 <p id="annualExpense">$ 0.00</p>
                 <span id="annualExpenseBrl">R$ 0.00</span>
+                <span id="annualExpenseBob" style="color:#fee2e2;">Bs. 0.00</span>
             </div>
             <div class="card bg-balance">
                 <h3>Economia no Ano</h3>
                 <p id="annualBalance">$ 0.00</p>
                 <span id="annualBalanceBrl">R$ 0.00</span>
+                <span id="annualBalanceBob" style="color:#dcfce7;">Bs. 0.00</span>
             </div>
         </div>
 
@@ -246,8 +267,8 @@
                 <thead>
                     <tr>
                         <th>Mês</th>
-                        <th>Renda Total (USD)</th>
-                        <th>Gasto Total (USD)</th>
+                        <th>Renda (USD)</th>
+                        <th>Gasto (USD)</th>
                         <th>Saldo (USD)</th>
                         <th>Economia (%)</th>
                     </tr>
@@ -258,36 +279,88 @@
     </div>
 </div>
 
-<script>
-    let appData = { expenses: [], settings: {}, tags: [] };
+<script type="module">
+    // Importações Diretas da Nuvem (CDN) para funcionar no GitHub Pages
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // ✅ SUAS CHAVES DO FIREBASE INTEGRADAS AQUI
+    const firebaseConfig = {
+      apiKey: "AIzaSyBkTAf-RqseA9Irj1JdKmPkQAdcQBBLBzo",
+      authDomain: "calculadora-6ce00.firebaseapp.com",
+      projectId: "calculadora-6ce00",
+      storageBucket: "calculadora-6ce00.firebasestorage.app",
+      messagingSenderId: "907450734979",
+      appId: "1:907450734979:web:f9318b4b82c8b278a23eb6",
+      measurementId: "G-Q39R39214H"
+    };
+
+    // Variáveis Globais de Dados
+    let appData = { expenses: [], settings: {}, tags: ['Pessoal', 'Sara', 'Geral'] };
     let currentLiveUsdRate = 5.30; 
-    
-    // Paleta de cores para gerar cores consistentes para tags customizadas
     const tagColors = ['#8b5cf6', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6', '#f43f5e', '#84cc16', '#6366f1', '#ec4899'];
-    
     const today = new Date();
     const currentMonthStr = today.toISOString().substring(0, 7);
     
-    // Carregar dados locais
-    try {
-        const localData = JSON.parse(localStorage.getItem('myWalletDataV5'));
-        if (localData && localData.settings) {
-            appData = localData;
+    // Variáveis de Conexão Firebase
+    let db;
+    let docRef;
+    let isFirebaseActive = true;
+    let isFirstLoad = true;
+
+    // Expor funções para o HTML
+    window.switchTab = switchTab;
+    window.changeActiveMonth = changeActiveMonth;
+    window.saveMonthSettings = saveMonthSettings;
+    window.addExpense = addExpense;
+    window.deleteExpense = deleteExpense;
+    window.createNewTag = createNewTag;
+    window.updateAnnualTab = updateAnnualTab;
+
+    document.addEventListener("DOMContentLoaded", async function() {
+        await fetchRates();
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            docRef = doc(db, "carteira_app", "dados_compartilhados");
+
+            document.getElementById('cloudIndicator').className = 'cloud-status cloud-on';
+            document.getElementById('cloudIndicator').innerText = 'Sincronização na Nuvem: ATIVADA';
+
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    appData = docSnap.data();
+                    if (!appData.expenses) appData.expenses = [];
+                    if (!appData.settings) appData.settings = {};
+                    if (!appData.tags) appData.tags = ['Pessoal', 'Sara', 'Geral'];
+                }
+
+                if (isFirstLoad) {
+                    initApp();
+                    isFirstLoad = false;
+                } else {
+                    buildHistoryFilter();
+                    renderTagOptions();
+                    updateUI();
+                }
+            });
+        } catch (error) {
+            console.error("Erro no Firebase, usando modo offline:", error);
+            document.getElementById('cloudIndicator').className = 'cloud-status cloud-off';
+            document.getElementById('cloudIndicator').innerText = 'Erro na Nuvem. Verifique o Modo de Teste no Firestore.';
+            startOfflineMode();
         }
-    } catch (e) {
-        console.log("Iniciando banco de dados.");
-    }
-
-    // Configuração inicial de tags se o app for novo
-    if (!appData.tags || appData.tags.length === 0) {
-        appData.tags = ['Pessoal', 'Sara', 'Geral'];
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        fetchRates().then(() => {
-            initApp();
-        });
     });
+
+    function startOfflineMode() {
+        isFirebaseActive = false;
+        try {
+            const localData = JSON.parse(localStorage.getItem('myWalletDataV7'));
+            if (localData && localData.settings) appData = localData;
+        } catch (e) { console.log("Iniciando banco offline."); }
+        initApp();
+    }
 
     async function fetchRates() {
         try {
@@ -295,7 +368,7 @@
             const data = await response.json();
             currentLiveUsdRate = data.rates.BRL;
         } catch (error) {
-            console.log("Usando cotação USD padrão (offline)");
+            console.log("Usando cotação padrão (offline)");
         }
     }
 
@@ -309,33 +382,42 @@
         changeActiveMonth();
     }
 
+    function saveDataLocally() {
+        if (isFirebaseActive && docRef) {
+            setDoc(docRef, appData).catch(e => {
+                console.error("Erro ao salvar:", e);
+                alert("Erro ao salvar na nuvem! Verifique se seu Banco de Dados no Firebase está no 'Modo de Teste' (Regras de Segurança).");
+            });
+        } else {
+            localStorage.setItem('myWalletDataV7', JSON.stringify(appData));
+        }
+    }
+
     function ensureMonthExists(monthStr) {
+        let hasChanges = false;
         if (!appData.settings[monthStr]) {
             let allMonths = Object.keys(appData.settings).sort();
             if (allMonths.length > 0) {
                 let lastMonth = allMonths[allMonths.length - 1];
-                appData.settings[monthStr] = { 
-                    ...appData.settings[lastMonth], 
-                    autoUsd: currentLiveUsdRate 
-                };
+                appData.settings[monthStr] = { ...appData.settings[lastMonth], autoUsd: currentLiveUsdRate };
             } else {
                 appData.settings[monthStr] = {
                     incUsd: 0, incBrl: 0, incVarUsd: 0, incVarBrl: 0,
                     manualBobRate: 1.35, autoUsd: currentLiveUsdRate
                 };
             }
-            saveDataLocally();
-        } else {
-            if (monthStr === currentMonthStr) {
-                appData.settings[monthStr].autoUsd = currentLiveUsdRate;
-                saveDataLocally();
-            }
+            hasChanges = true;
+        } else if (monthStr === currentMonthStr && appData.settings[monthStr].autoUsd !== currentLiveUsdRate) {
+            appData.settings[monthStr].autoUsd = currentLiveUsdRate;
+            hasChanges = true;
         }
+
+        if (hasChanges) saveDataLocally();
     }
 
-    // Gerencia o Seletor de Tags e a Criação Dinâmica
     function renderTagOptions() {
         const select = document.getElementById('expTag');
+        const currentValue = select.value;
         select.innerHTML = '';
         appData.tags.forEach(tag => {
             const opt = document.createElement('option');
@@ -343,46 +425,38 @@
             opt.innerText = tag;
             select.appendChild(opt);
         });
+        if (appData.tags.includes(currentValue)) select.value = currentValue;
     }
 
     function createNewTag() {
-        const newTag = prompt("Digite o nome da nova Tag (Ex: Viagem, Carro, Academia):");
+        const newTag = prompt("Digite o nome da nova Tag:");
         if (newTag && newTag.trim() !== '') {
             const formattedTag = newTag.trim();
-            // Verifica se a tag já não existe (ignorando letras maiúsculas/minúsculas)
-            const tagExists = appData.tags.some(t => t.toLowerCase() === formattedTag.toLowerCase());
-            
-            if (!tagExists) {
+            if (!appData.tags.some(t => t.toLowerCase() === formattedTag.toLowerCase())) {
                 appData.tags.push(formattedTag);
                 saveDataLocally();
                 renderTagOptions();
-                document.getElementById('expTag').value = formattedTag; // Seleciona a tag criada
+                document.getElementById('expTag').value = formattedTag; 
             } else {
-                alert("Esta tag já existe na sua lista!");
+                alert("Esta tag já existe!");
             }
         }
     }
 
-    // Função para gerar sempre a mesma cor para uma mesma tag
     function getTagColor(tagName) {
         if (tagName === 'Pessoal') return 'var(--accent-natan)';
         if (tagName === 'Sara') return 'var(--accent-sara)';
         if (tagName === 'Geral') return '#64748b';
-        
         let hash = 0;
-        for (let i = 0; i < tagName.length; i++) {
-            hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
-        }
+        for (let i = 0; i < tagName.length; i++) hash = tagName.charCodeAt(i) + ((hash << 5) - hash);
         return tagColors[Math.abs(hash) % tagColors.length];
     }
 
     function buildHistoryFilter() {
         const select = document.getElementById('historyFilter');
         const currentValue = select.value || currentMonthStr;
-        
         let months = new Set(Object.keys(appData.settings));
         appData.expenses.forEach(e => months.add(e.month));
-        
         let sortedMonths = Array.from(months).sort((a, b) => b.localeCompare(a));
         
         select.innerHTML = '';
@@ -390,7 +464,7 @@
             const opt = document.createElement('option');
             opt.value = m;
             const parts = m.split('-');
-            opt.innerText = `${parts[1]}/${parts[0]}` + (m === currentMonthStr ? " (Mês Atual)" : "");
+            opt.innerText = `${parts[1]}/${parts[0]}` + (m === currentMonthStr ? " (Atual)" : "");
             if (m === currentValue) opt.selected = true;
             select.appendChild(opt);
         });
@@ -399,15 +473,12 @@
     function buildYearFilter() {
         const select = document.getElementById('yearFilter');
         const currentYear = currentMonthStr.split('-')[0];
-        
         let years = new Set();
         Object.keys(appData.settings).forEach(m => years.add(m.split('-')[0]));
         appData.expenses.forEach(e => years.add(e.month.split('-')[0]));
-        
         if(years.size === 0) years.add(currentYear);
         
         let sortedYears = Array.from(years).sort((a, b) => b.localeCompare(a));
-        
         select.innerHTML = '';
         sortedYears.forEach(y => {
             const opt = document.createElement('option');
@@ -425,12 +496,12 @@
         ensureMonthExists(selectedMonth);
         const s = appData.settings[selectedMonth];
         
-        document.getElementById('incomeUsd').value = s.incUsd;
-        document.getElementById('incomeBrl').value = s.incBrl;
-        document.getElementById('incomeVarUsd').value = s.incVarUsd;
-        document.getElementById('incomeVarBrl').value = s.incVarBrl;
-        document.getElementById('manualBobRate').value = s.manualBobRate;
-        document.getElementById('autoUsdRateDisplay').innerText = `R$ ${s.autoUsd.toFixed(2)}`;
+        document.getElementById('incomeUsd').value = (s.incUsd || 0).toFixed(2);
+        document.getElementById('incomeBrl').value = (s.incBrl || 0).toFixed(2);
+        document.getElementById('incomeVarUsd').value = (s.incVarUsd || 0).toFixed(2);
+        document.getElementById('incomeVarBrl').value = (s.incVarBrl || 0).toFixed(2);
+        document.getElementById('manualBobRate').value = (s.manualBobRate || 1.35).toFixed(2);
+        document.getElementById('autoUsdRateDisplay').innerText = `R$ ${(s.autoUsd).toFixed(2)}`;
         
         const titleParts = selectedMonth.split('-');
         document.getElementById('saudeMonthTitle').innerText = `Saúde Financeira - ${titleParts[1]}/${titleParts[0]}`;
@@ -460,6 +531,7 @@
             id: Date.now(),
             name: document.getElementById('expName').value,
             tag: document.getElementById('expTag').value,
+            type: document.getElementById('expType').value,
             amount: parseFloat(document.getElementById('expAmount').value),
             currency: document.getElementById('expCurrency').value,
             month: month
@@ -480,10 +552,6 @@
         updateUI();
     }
 
-    function saveDataLocally() {
-        localStorage.setItem('myWalletDataV5', JSON.stringify(appData));
-    }
-
     function calcMonthData(monthStr) {
         const s = appData.settings[monthStr] || { incUsd:0, incBrl:0, incVarUsd:0, incVarBrl:0, manualBobRate:1, autoUsd: currentLiveUsdRate };
         
@@ -495,11 +563,7 @@
         const totalBobIncome = totalBrlIncome * s.manualBobRate;
 
         const expenses = appData.expenses.filter(e => e.month === monthStr);
-        let expBrl = 0;
-        let expBob = 0;
-        let expUsd = 0;
-        
-        // Inicializa totais com todas as tags cadastradas
+        let expBrl = 0; let expBob = 0; let expUsd = 0;
         let tagTotals = {};
         appData.tags.forEach(t => tagTotals[t] = 0);
 
@@ -515,15 +579,11 @@
             const usdCost = brlCost / s.autoUsd;
             expUsd += usdCost;
             
-            // Caso seja uma despesa antiga com uma tag deletada/inexistente, garante que não de erro
             if (tagTotals[exp.tag] === undefined) tagTotals[exp.tag] = 0;
             tagTotals[exp.tag] += usdCost;
         });
 
-        return {
-            s, totalBrlIncome, totalUsdIncome, totalBobIncome, fixedUsdInBrl, varUsdInBrl,
-            expensesList: expenses, expBrl, expBob, expUsd, tagTotals
-        };
+        return { s, totalBrlIncome, totalUsdIncome, totalBobIncome, fixedUsdInBrl, varUsdInBrl, expensesList: expenses, expBrl, expBob, expUsd, tagTotals };
     }
 
     function updateUI() {
@@ -533,7 +593,7 @@
         document.getElementById('incomeBreakdown').innerHTML = `
             <strong>Renda Fixa ($ → R$):</strong> $ ${data.s.incUsd.toFixed(2)} = <strong>R$ ${data.fixedUsdInBrl.toFixed(2)}</strong>.<br>
             ${data.s.incVarUsd > 0 ? `<strong>Renda Variável ($ → R$):</strong> $ ${data.s.incVarUsd.toFixed(2)} = <strong>R$ ${data.varUsdInBrl.toFixed(2)}</strong>.<br>` : ''}
-            <br><strong>PODER DE COMPRA DO MÊS:</strong><br> 
+            <br><strong>PODER DE COMPRA DO MÊS (NAS 3 MOEDAS):</strong><br> 
             <span style="color:var(--primary); font-weight:bold;">$ ${data.totalUsdIncome.toFixed(2)} USD</span> &nbsp;|&nbsp; 
             <span style="color:var(--success); font-weight:bold;">R$ ${data.totalBrlIncome.toFixed(2)} BRL</span> &nbsp;|&nbsp; 
             <span style="color:var(--accent-sara); font-weight:bold;">Bs. ${data.totalBobIncome.toFixed(2)} BOB</span>
@@ -544,17 +604,23 @@
         tbody.innerHTML = ''; tfoot.innerHTML = '';
 
         data.expensesList.forEach(exp => {
-            let brlCost = 0; let bobCost = 0;
-            if (exp.currency === 'BRL') { brlCost = exp.amount; bobCost = exp.amount * data.s.manualBobRate; }
-            else if (exp.currency === 'BOB') { brlCost = exp.amount / data.s.manualBobRate; bobCost = exp.amount; }
-            else if (exp.currency === 'USD') { brlCost = exp.amount * data.s.autoUsd; bobCost = brlCost * data.s.manualBobRate; }
+            let brlCost = 0; let bobCost = 0; let usdCost = 0;
+            if (exp.currency === 'BRL') { brlCost = exp.amount; bobCost = exp.amount * data.s.manualBobRate; usdCost = exp.amount / data.s.autoUsd; }
+            else if (exp.currency === 'BOB') { brlCost = exp.amount / data.s.manualBobRate; bobCost = exp.amount; usdCost = brlCost / data.s.autoUsd; }
+            else if (exp.currency === 'USD') { usdCost = exp.amount; brlCost = exp.amount * data.s.autoUsd; bobCost = brlCost * data.s.manualBobRate; }
 
-            const color = getTagColor(exp.tag);
+            const typeLabel = exp.type || 'Variável';
+            const typeClass = typeLabel === 'Fixo' ? 'badge-fixo' : 'badge-var';
+            const tagColor = getTagColor(exp.tag);
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td><span class="badge" style="background-color: ${color};">${exp.tag}</span></td>
+                <td>
+                    <span class="badge" style="background-color: ${tagColor}; display:block;">${exp.tag}</span>
+                    <span class="badge ${typeClass}">${typeLabel}</span>
+                </td>
                 <td>${exp.name}</td>
-                <td>${exp.amount.toFixed(2)} ${exp.currency}</td>
+                <td style="font-weight:bold;">${exp.amount.toFixed(2)} ${exp.currency}</td>
                 <td>R$ ${brlCost.toFixed(2)}</td>
                 <td>Bs. ${bobCost.toFixed(2)}</td>
                 <td><button class="delete-btn" onclick="deleteExpense(${exp.id})">X</button></td>
@@ -564,8 +630,9 @@
 
         if (data.expensesList.length > 0) {
             tfoot.innerHTML = `<tr class="total-row">
-                <td colspan="3" style="text-align: right;">TOTAL A RESERVAR NO MÊS:</td>
-                <td style="color: var(--primary);">R$ ${data.expBrl.toFixed(2)}</td>
+                <td colspan="2" style="text-align: right;">TOTAL GASTO/RESERVADO (NAS 3 MOEDAS):</td>
+                <td style="color: var(--primary);">$ ${data.expUsd.toFixed(2)}</td>
+                <td style="color: var(--success);">R$ ${data.expBrl.toFixed(2)}</td>
                 <td style="color: var(--accent-sara);">Bs. ${data.expBob.toFixed(2)}</td>
                 <td></td>
             </tr>`;
@@ -575,31 +642,37 @@
 
         const balUsd = data.totalUsdIncome - data.expUsd;
         const balBrl = data.totalBrlIncome - data.expBrl;
+        const balBob = data.totalBobIncome - data.expBob;
 
         document.getElementById('dashIncome').innerText = `$ ${data.totalUsdIncome.toFixed(2)}`;
         document.getElementById('dashIncomeBrl').innerText = `R$ ${data.totalBrlIncome.toFixed(2)}`;
+        document.getElementById('dashIncomeBob').innerText = `Bs. ${data.totalBobIncome.toFixed(2)}`;
+        
         document.getElementById('dashExpense').innerText = `$ ${data.expUsd.toFixed(2)}`;
         document.getElementById('dashExpenseBrl').innerText = `R$ ${data.expBrl.toFixed(2)}`;
+        document.getElementById('dashExpenseBob').innerText = `Bs. ${data.expBob.toFixed(2)}`;
+        
         document.getElementById('dashBalance').innerText = `$ ${balUsd.toFixed(2)}`;
         document.getElementById('dashBalanceBrl').innerText = `R$ ${balBrl.toFixed(2)}`;
+        document.getElementById('dashBalanceBob').innerText = `Bs. ${balBob.toFixed(2)}`;
 
         const summaryTbody = document.querySelector('#summaryTable tbody');
         summaryTbody.innerHTML = '';
         for (const [tag, tUsd] of Object.entries(data.tagTotals)) {
-            // Esconde tags que estão com valor zero neste mês específico para manter a aba limpa
             if (tUsd > 0) {
                 const tBrl = tUsd * data.s.autoUsd;
-                const pct = data.totalUsdIncome > 0 ? ((tUsd / data.totalUsdIncome) * 100).toFixed(1) : 0;
+                const tBob = tBrl * data.s.manualBobRate;
+                const pct = data.totalUsdIncome > 0 ? ((tUsd / data.totalUsdIncome) * 100).toFixed(2) : "0.00";
                 const color = getTagColor(tag);
                 summaryTbody.innerHTML += `<tr>
                     <td><span class="badge" style="background-color: ${color};">${tag}</span></td>
                     <td>$ ${tUsd.toFixed(2)}</td>
                     <td>R$ ${tBrl.toFixed(2)}</td>
+                    <td>Bs. ${tBob.toFixed(2)}</td>
                     <td>${pct}%</td>
                 </tr>`;
             }
         }
-
         updateAnnualTab();
     }
 
@@ -608,7 +681,6 @@
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         event.currentTarget.classList.add('active');
-        
         if(tabId === 'anual') updateAnnualTab();
     }
 
@@ -616,25 +688,20 @@
         const year = document.getElementById('yearFilter').value;
         if(!year) return;
 
-        let yearIncomeUsd = 0; let yearIncomeBrl = 0;
-        let yearExpUsd = 0; let yearExpBrl = 0;
-        
+        let yearIncomeUsd = 0; let yearIncomeBrl = 0; let yearIncomeBob = 0;
+        let yearExpUsd = 0; let yearExpBrl = 0; let yearExpBob = 0;
         const annualTbody = document.querySelector('#annualTable tbody');
         annualTbody.innerHTML = '';
 
-        const monthsInYear = Object.keys(appData.settings)
-            .filter(m => m.startsWith(year))
-            .sort();
+        const monthsInYear = Object.keys(appData.settings).filter(m => m.startsWith(year)).sort();
 
         monthsInYear.forEach(m => {
             const mData = calcMonthData(m);
-            yearIncomeUsd += mData.totalUsdIncome;
-            yearIncomeBrl += mData.totalBrlIncome;
-            yearExpUsd += mData.expUsd;
-            yearExpBrl += mData.expBrl;
+            yearIncomeUsd += mData.totalUsdIncome; yearIncomeBrl += mData.totalBrlIncome; yearIncomeBob += mData.totalBobIncome;
+            yearExpUsd += mData.expUsd; yearExpBrl += mData.expBrl; yearExpBob += mData.expBob;
 
             const mBal = mData.totalUsdIncome - mData.expUsd;
-            const mPct = mData.totalUsdIncome > 0 ? ((mBal / mData.totalUsdIncome) * 100).toFixed(1) : 0;
+            const mPct = mData.totalUsdIncome > 0 ? ((mBal / mData.totalUsdIncome) * 100).toFixed(2) : "0.00";
             const parts = m.split('-');
 
             annualTbody.innerHTML += `<tr>
@@ -646,19 +713,19 @@
             </tr>`;
         });
 
-        if(monthsInYear.length === 0) {
-            annualTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum dado para este ano.</td></tr>`;
-        }
-
-        const yearBalUsd = yearIncomeUsd - yearExpUsd;
-        const yearBalBrl = yearIncomeBrl - yearExpBrl;
+        if(monthsInYear.length === 0) annualTbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Nenhum dado para este ano.</td></tr>`;
 
         document.getElementById('annualIncome').innerText = `$ ${yearIncomeUsd.toFixed(2)}`;
         document.getElementById('annualIncomeBrl').innerText = `R$ ${yearIncomeBrl.toFixed(2)}`;
+        document.getElementById('annualIncomeBob').innerText = `Bs. ${yearIncomeBob.toFixed(2)}`;
+        
         document.getElementById('annualExpense').innerText = `$ ${yearExpUsd.toFixed(2)}`;
         document.getElementById('annualExpenseBrl').innerText = `R$ ${yearExpBrl.toFixed(2)}`;
-        document.getElementById('annualBalance').innerText = `$ ${yearBalUsd.toFixed(2)}`;
-        document.getElementById('annualBalanceBrl').innerText = `R$ ${yearBalBrl.toFixed(2)}`;
+        document.getElementById('annualExpenseBob').innerText = `Bs. ${yearExpBob.toFixed(2)}`;
+        
+        document.getElementById('annualBalance').innerText = `$ ${(yearIncomeUsd - yearExpUsd).toFixed(2)}`;
+        document.getElementById('annualBalanceBrl').innerText = `R$ ${(yearIncomeBrl - yearExpBrl).toFixed(2)}`;
+        document.getElementById('annualBalanceBob').innerText = `Bs. ${(yearIncomeBob - yearExpBob).toFixed(2)}`;
     }
 </script>
 </body>
